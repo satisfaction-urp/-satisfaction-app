@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Rilevazione Soddisfazione</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #F5F1E6;
+    --surface: #FFFFFF;
+    --primary: #1F5C5B;
+    --primary-dark: #123F3E;
+    --primary-light: #E4EFEE;
+    --accent: #D9A441;
+    --accent-dark: #B5822C;
+    --text: #26312F;
+    --text-muted: #667069;
+    --border: #E3DDCC;
+    --danger: #B4553F;
+    --danger-bg: #FBEAE5;
+    --radius-lg: 26px;
+    --radius-md: 16px;
+    --radius-sm: 12px;
+    --font-display: 'Baloo 2', 'Segoe UI Rounded', 'Segoe UI', Verdana, sans-serif;
+    --font-body: 'Nunito', 'Segoe UI', Verdana, sans-serif;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{height:100%; margin:0;}
+  body{
+    font-family: var(--font-body);
+    background:
+      radial-gradient(circle at 15% 10%, #FBF8F0 0%, transparent 45%),
+      radial-gradient(circle at 85% 90%, #EFE8D6 0%, transparent 50%),
+      var(--bg);
+    color: var(--text);
+    min-height:100vh;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+  }
+  #app{
+    width:100%;
+    max-width:520px;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    padding: 20px 20px 40px 20px;
+    position:relative;
+  }
+
+  .app-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding: 4px 2px 20px 2px;
+    flex-shrink:0;
+  }
+  .brand{ display:flex; align-items:center; gap:12px; }
+  .brand-mark{
+    width:40px; height:40px;
+    border-radius:13px;
+    background: linear-gradient(145deg, var(--primary), var(--primary-dark));
+    display:flex; align-items:center; justify-content:center;
+    font-size:20px;
+    flex-shrink:0;
+    box-shadow: 0 4px 10px rgba(31,92,91,0.25);
+  }
+  .brand-text{
+    font-family: var(--font-display);
+    font-weight:700;
+    font-size:17px;
+    color: var(--primary-dark);
+    line-height:1.15;
+  }
+  .brand-text small{
+    display:block;
+    font-family: var(--font-body);
+    font-weight:600;
+    font-size:0.62em;
+    color: var(--text-muted);
+  }
+  .back-btn{
+    border:none;
+    background: var(--surface);
+    color: var(--primary);
+    width:44px; height:44px;
+    border-radius:14px;
+    font-size:20px;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    cursor:pointer;
+  }
+  .back-btn:active{ transform: scale(0.92); }
+  .back-btn.hidden{ visibility:hidden; }
+
+  .progress-wrap{ flex-shrink:0; padding: 0 2px 20px 2px; display:none; }
+  .progress-track{ height:9px; background: var(--border); border-radius:99px; overflow:hidden; }
+  .progress-fill{ height:100%; background: linear-gradient(90deg, var(--accent), var(--primary)); border-radius:99px; transition: width .45s cubic-bezier(.4,0,.2,1); }
+  .progress-label{ margin-top:7px; font-size:12.5px; font-weight:700; color: var(--text-muted); text-align:right; }
+
+  .stage{ flex:1; position:relative; }
+  .screen{
+    display:none;
+    flex-direction:column;
+    animation: fadeIn .35s ease;
+  }
+  .screen.active{ display:flex; }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+
+  /* CODE SCREEN */
+  .code-card{
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    padding: 28px 22px;
+    margin-top: 8vh;
+    box-shadow: 0 10px 30px rgba(31,92,91,0.08);
+  }
+  .code-icon{ font-size:44px; text-align:center; margin-bottom:10px; }
+  .code-title{
+    font-family: var(--font-display);
+    font-weight:800;
+    font-size:24px;
+    color: var(--primary-dark);
+    text-align:center;
+    margin-bottom:6px;
+  }
+  .code-sub{
+    text-align:center;
+    color: var(--text-muted);
+    font-weight:600;
+    font-size:14.5px;
+    margin-bottom:22px;
+    line-height:1.4;
+  }
+  .code-input{
+    width:100%;
+    border: 2.5px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    font-family: var(--font-display);
+    font-weight:700;
+    font-size: 24px;
+    letter-spacing: 4px;
+    text-align:center;
+    text-transform: uppercase;
+    color: var(--text);
+    background: var(--bg);
+  }
+  .code-input:focus{ outline:none; border-color: var(--primary); }
+  .code-error{
+    display:none;
+    background: var(--danger-bg);
+    color: var(--danger);
+    font-weight:700;
+    font-size:14px;
+    padding:12px 14px;
+    border-radius: var(--radius-sm);
+    margin-top:14px;
+    text-align:center;
+    line-height:1.4;
+  }
+  .code-error.show{ display:block; }
+  .primary-btn{
+    width:100%;
+    border:none;
+    background: var(--primary);
+    color:#fff;
+    font-family: var(--font-display);
+    font-weight:700;
+    font-size:17px;
+    padding: 17px;
+    border-radius: var(--radius-md);
+    cursor:pointer;
+    box-shadow: 0 8px 20px rgba(31,92,91,0.28);
+    margin-top:18px;
+    transition: all .15s ease;
+  }
+  .primary-btn:disabled{ background:#C9C2AE; box-shadow:none; cursor:not-allowed; }
+  .primary-btn:not(:disabled):active{ transform: scale(0.98); }
+  .spinner{
+    display:inline-block; width:16px; height:16px;
+    border:2.5px solid rgba(255,255,255,0.4); border-top-color:#fff;
+    border-radius:50%; animation: spin .7s linear infinite; margin-right:8px; vertical-align:-3px;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  /* WELCOME */
+  .welcome-title{
+    font-family: var(--font-display);
+    font-weight:800;
+    font-size: 26px;
+    color: var(--primary-dark);
+    margin: 6px 0 2px 0;
+  }
+  .welcome-sub{ color: var(--text-muted); font-size:14.5px; font-weight:600; margin-bottom:20px; }
+  .section-label{
+    font-family: var(--font-display);
+    font-weight:700;
+    font-size:16px;
+    color: var(--primary);
+    margin: 6px 4px 10px 4px;
+  }
+  .dept-grid{ display:grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+  .chip{
+    border: 2.5px solid var(--border);
+    background: var(--surface);
+    border-radius: var(--radius-md);
+    padding: 15px 8px;
+    font-family: var(--font-body);
+    font-weight:800;
+    font-size: 14.5px;
+    color: var(--text);
+    cursor:pointer;
+    text-align:center;
+    transition: all .15s ease;
+    min-height:58px;
+    display:flex; align-items:center; justify-content:center;
+    line-height:1.2;
+  }
+  .chip:active{ transform: scale(0.95); }
+  .chip.selected{ background: var(--primary); border-color: var(--primary); color:#fff; box-shadow: 0 6px 16px rgba(31,92,91,0.3); }
+
+  .who-grid{ display:grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+  .who-chip{
+    border: 2.5px solid var(--border);
+    background: var(--surface);
+    border-radius: var(--radius-md);
+    padding: 18px 8px;
+    font-family: var(--font-display);
+    font-weight:700;
+    font-size:14.5px;
+    color: var(--text);
+    cursor:pointer;
+    text-align:center;
+    transition: all .15s ease;
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+  }
+  .who-chip:active{ transform: scale(0.96); }
+  .who-chip.selected{ background: var(--accent); border-color: var(--accent-dark); color:#fff; }
+  .who-chip .icon-badge{
+    width:54px; height:54px; border-radius:18px;
+    display:flex; align-items:center; justify-content:center; position:relative;
+  }
+  .who-chip .icon-badge svg{ width:58%; height:58%; }
+  .who-chip.selected .icon-badge{ background: rgba(255,255,255,0.25) !important; }
+  .who-chip .heart-badge{
+    position:absolute; top:-5px; right:-5px; width:20px; height:20px; border-radius:50%;
+    background: var(--accent); color:#fff; font-size:11px;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15); border: 2px solid var(--surface);
+  }
+
+  /* QUESTION */
+  .question-wrap{ flex:1; display:flex; flex-direction:column; justify-content:center; text-align:center; min-height:50vh; }
+  .question-kicker{ font-weight:800; color: var(--accent-dark); font-size:12.5px; letter-spacing:0.06em; text-transform:uppercase; margin-bottom:10px; }
+  .question-text{ font-family: var(--font-display); font-weight:700; font-size:23px; color: var(--text); line-height:1.3; margin: 0 0 30px 0; }
+  .faccine-grid{ display:grid; grid-template-columns: repeat(5, 1fr); gap: 7px; }
+  .faccia-btn{
+    border: 3px solid var(--border);
+    background: var(--surface);
+    border-radius: 20px;
+    padding: 12px 2px;
+    cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+    transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease, background .12s ease;
+  }
+  .faccia-btn .emoji{ font-size: 30px; line-height:1; }
+  .faccia-btn .label{ font-weight:800; font-size:10.5px; color: var(--text-muted); }
+  .faccia-btn:active{ transform: scale(0.93); }
+  .faccia-btn.selected{ border-color: var(--primary); background: var(--primary-light); box-shadow: 0 6px 16px rgba(31,92,91,0.22); }
+  .faccia-btn.selected .label{ color: var(--primary-dark); }
+
+  /* THANKS / STATUS */
+  .status-wrap{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; min-height:60vh; }
+  .status-emoji{ font-size:66px; margin-bottom:18px; animation: pop .5s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes pop{ 0%{transform:scale(0.4); opacity:0;} 100%{transform:scale(1); opacity:1;} }
+  .status-title{ font-family: var(--font-display); font-weight:800; font-size:24px; color: var(--primary-dark); margin-bottom:10px; }
+  .status-text{ font-size:15px; color: var(--text-muted); font-weight:600; max-width:360px; line-height:1.5; }
+  .retry-btn{
+    margin-top:22px; border:2px solid var(--primary); background:transparent; color:var(--primary);
+    font-family: var(--font-display); font-weight:700; font-size:15px; padding:13px 22px;
+    border-radius: var(--radius-md); cursor:pointer;
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div class="app-header">
+    <button class="back-btn hidden" id="backBtn" aria-label="Indietro">←</button>
+    <div class="brand">
+      <div class="brand-mark">🏥</div>
+      <div class="brand-text">Come sta andando?<small>La sua opinione conta</small></div>
+    </div>
+    <div style="width:44px"></div>
+  </div>
+
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+    <div class="progress-label" id="progressLabel"></div>
+  </div>
+
+  <div class="stage">
+
+    <!-- SCREEN: CODICE -->
+    <section class="screen active" id="screen-code">
+      <div class="code-card">
+        <div class="code-icon">🎟️</div>
+        <div class="code-title">Inserisca il suo codice</div>
+        <div class="code-sub">Il codice le è stato consegnato dal personale al momento della dimissione.</div>
+        <input class="code-input" id="codeInput" type="text" maxlength="6" placeholder="ABC123" autocomplete="off" autocapitalize="characters">
+        <div class="code-error" id="codeError"></div>
+        <button class="primary-btn" id="verifyBtn">Verifica codice</button>
+      </div>
+    </section>
+
+    <!-- SCREEN: WELCOME -->
+    <section class="screen" id="screen-welcome">
+      <div class="welcome-title">Grazie, iniziamo 👋</div>
+      <div class="welcome-sub">Bastano due minuti</div>
+
+      <div class="section-label">In quale reparto si trova?</div>
+      <div class="dept-grid" id="deptGrid"></div>
+
+      <div class="section-label">Chi risponde?</div>
+      <div class="who-grid" id="whoGrid"></div>
+
+      <button class="primary-btn" id="startBtn" disabled>Inizia il questionario</button>
+    </section>
+
+    <!-- SCREEN: QUESTION -->
+    <section class="screen" id="screen-question">
+      <div class="question-wrap">
+        <div class="question-kicker" id="qKicker">Domanda</div>
+        <div class="question-text" id="qText"></div>
+        <div class="faccine-grid" id="faccineGrid"></div>
+      </div>
+    </section>
+
+    <!-- SCREEN: INVIO IN CORSO -->
+    <section class="screen" id="screen-sending">
+      <div class="status-wrap">
+        <div class="status-emoji">⏳</div>
+        <div class="status-title">Un attimo...</div>
+        <div class="status-text">Stiamo inviando le sue risposte.</div>
+      </div>
+    </section>
+
+    <!-- SCREEN: THANKS -->
+    <section class="screen" id="screen-thanks">
+      <div class="status-wrap">
+        <div class="status-emoji">💚</div>
+        <div class="status-title">Grazie per il tempo dedicato</div>
+        <div class="status-text">La Sua opinione è preziosa per cercare di migliorarci.</div>
+      </div>
+    </section>
+
+    <!-- SCREEN: ERRORE INVIO -->
+    <section class="screen" id="screen-error">
+      <div class="status-wrap">
+        <div class="status-emoji">😕</div>
+        <div class="status-title">Qualcosa non ha funzionato</div>
+        <div class="status-text" id="errorText">Controlli la connessione e riprovi.</div>
+        <button class="retry-btn" id="retryBtn">Riprova</button>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ============ CONFIGURAZIONE ============
+  // Indirizzo del "ponte" Apps Script collegato al Google Sheet
+  var API_URL = "https://script.google.com/macros/s/AKfycbxfTOfhigOMMWpuvRXMIjVG9xC7acwmZkIvln2aGyOX7iBLAeucZww_BuSJcj7HxziuLw/exec";
+
+  var DEPARTMENTS = [
+    "Nucleo Alzheimer","G1","G2","G3","A","B","C","D","E","Hospice","Centro Diurno Integrato (CDI)"
+  ];
+  var CDI_LABEL = "Centro Diurno Integrato (CDI)";
+
+  var WHO_OPTIONS = [
+    {
+      id: "paziente", label: "Sono un paziente",
+      badgeBg: "var(--primary-light)", iconColor: "var(--primary)",
+      icon: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" fill="currentColor"/></svg>'
+    },
+    {
+      id: "familiare", label: "Sono un familiare/caregiver",
+      badgeBg: "#FBF1DD", iconColor: "var(--accent-dark)", heart: true,
+      icon: '<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15.5 11c1.38 0 2.49-1.12 2.49-2.5S16.88 6 15.5 6 13 7.12 13 8.5s1.12 2.5 2.5 2.5zM8.5 11c1.38 0 2.49-1.12 2.49-2.5S9.88 6 8.5 6 6 7.12 6 8.5 7.12 11 8.5 11zm0 2c-2.03 0-6 1.02-6 3.5V19h9v-2.5c0-1.13.42-2.15 1.09-2.98C11.68 13.2 9.87 13 8.5 13zm7 0c-.28 0-.6.02-.93.05.83.73 1.43 1.72 1.43 2.95V19h6v-2.5c0-2.48-3.97-3.5-6.5-3.5z" fill="currentColor"/></svg>'
+    }
+  ];
+
+  var FACCINE = [
+    { value: 5, emoji: "😃", label: "Ottimo" },
+    { value: 4, emoji: "🙂", label: "Buono" },
+    { value: 3, emoji: "😐", label: "Sufficiente" },
+    { value: 2, emoji: "🙁", label: "Scarso" },
+    { value: 1, emoji: "☹️", label: "Pessimo" }
+  ];
+
+  var QUESTIONS = [
+    { id: "accoglienza_reception", text: "Come valuta l'accoglienza ricevuta dalla Reception?" },
+    { id: "accoglienza_reparto", text: "Come valuta l'accoglienza ricevuta dal Reparto?" },
+    { id: "privacy", text: "Come valuta il rispetto della Privacy?" },
+    { id: "medici", text: "Come valuta l'assistenza del personale Medico?" },
+    { id: "infermieri", text: "Come valuta l'assistenza del personale Infermieristico?" },
+    { id: "oss_ausiliari", text: "Come valuta l'assistenza del personale OSS e Ausiliario?" },
+    { id: "fisioterapia_to", text: "Come valuta il servizio di Fisioterapia e Terapia Occupazionale?" },
+    { id: "educativo", text: "Come valuta il servizio Educativo?", onlyFor: CDI_LABEL },
+    { id: "uffici", text: "Come valuta il servizio degli Uffici Amministrativi?" },
+    { id: "pulizia", text: "Come valuta la pulizia degli ambienti?" },
+    { id: "pasti", text: "Come valuta la qualità dei pasti?" },
+    { id: "soddisfazione_generale", text: "Come valuta il livello di soddisfazione generale del Servizio?" }
+  ];
+
+  var state = { codice: null, reparto: null, chiRisponde: null, qIndex: 0, answers: {} };
+
+  function activeQuestions(){
+    return QUESTIONS.filter(function(q){ return !q.onlyFor || q.onlyFor === state.reparto; });
+  }
+
+  function chiamaApi(payload){
+    return fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    }).then(function(r){ return r.json(); });
+  }
+
+  // ---------- SCREEN 0: CODICE ----------
+  var codeInput = document.getElementById("codeInput");
+  var codeError = document.getElementById("codeError");
+  var verifyBtn = document.getElementById("verifyBtn");
+
+  // Se il link contiene ?codice=ABC123 (arrivo da QR code), precompila e verifica subito
+  var urlParams = new URLSearchParams(window.location.search);
+  var codiceUrl = urlParams.get("codice");
+  if (codiceUrl){
+    codeInput.value = codiceUrl.toUpperCase();
+    setTimeout(function(){ verificaCodice(); }, 300);
+  }
+
+  verifyBtn.addEventListener("click", verificaCodice);
+  codeInput.addEventListener("input", function(){
+    codeInput.value = codeInput.value.toUpperCase();
+    codeError.classList.remove("show");
+  });
+  codeInput.addEventListener("keydown", function(ev){
+    if (ev.key === "Enter") verificaCodice();
+  });
+
+  function verificaCodice(){
+    var codice = codeInput.value.trim();
+    if (!codice){
+      mostraErroreCodice("Inserisca il codice per continuare.");
+      return;
+    }
+    verifyBtn.disabled = true;
+    verifyBtn.innerHTML = '<span class="spinner"></span>Verifica in corso...';
+    codeError.classList.remove("show");
+
+    chiamaApi({ action: "checkCode", codice: codice })
+      .then(function(res){
+        verifyBtn.disabled = false;
+        verifyBtn.textContent = "Verifica codice";
+        if (res.valid){
+          state.codice = codice;
+          goToScreen("welcome");
+        } else {
+          mostraErroreCodice(res.message || "Codice non valido.");
+        }
+      })
+      .catch(function(){
+        verifyBtn.disabled = false;
+        verifyBtn.textContent = "Verifica codice";
+        mostraErroreCodice("Impossibile verificare il codice. Controlli la connessione e riprovi.");
+      });
+  }
+
+  function mostraErroreCodice(msg){
+    codeError.textContent = msg;
+    codeError.classList.add("show");
+  }
+
+  // ---------- SCREEN 1: WELCOME ----------
+  var deptGrid = document.getElementById("deptGrid");
+  DEPARTMENTS.forEach(function(dep){
+    var btn = document.createElement("button");
+    btn.className = "chip";
+    btn.textContent = dep;
+    btn.addEventListener("click", function(){
+      state.reparto = dep;
+      Array.prototype.forEach.call(deptGrid.children, function(c){ c.classList.remove("selected"); });
+      btn.classList.add("selected");
+      checkStartReady();
+    });
+    deptGrid.appendChild(btn);
+  });
+
+  var whoGrid = document.getElementById("whoGrid");
+  WHO_OPTIONS.forEach(function(opt){
+    var btn = document.createElement("button");
+    btn.className = "who-chip";
+    var heartBadge = opt.heart ? '<span class="heart-badge">♥</span>' : '';
+    btn.innerHTML =
+      '<span class="icon-badge" style="background:' + opt.badgeBg + '; color:' + opt.iconColor + '">' +
+        opt.icon + heartBadge +
+      '</span><span>' + opt.label + '</span>';
+    btn.addEventListener("click", function(){
+      state.chiRisponde = opt.label;
+      Array.prototype.forEach.call(whoGrid.children, function(c){ c.classList.remove("selected"); });
+      btn.classList.add("selected");
+      checkStartReady();
+    });
+    whoGrid.appendChild(btn);
+  });
+
+  var startBtn = document.getElementById("startBtn");
+  function checkStartReady(){ startBtn.disabled = !(state.reparto && state.chiRisponde); }
+  startBtn.addEventListener("click", function(){
+    state.qIndex = 0;
+    state.answers = {};
+    goToScreen("question");
+    renderQuestion();
+  });
+
+  // ---------- SCREEN 2: QUESTION ----------
+  var qKicker = document.getElementById("qKicker");
+  var qText = document.getElementById("qText");
+  var faccineGrid = document.getElementById("faccineGrid");
+  var progressWrap = document.getElementById("progressWrap");
+  var progressFill = document.getElementById("progressFill");
+  var progressLabel = document.getElementById("progressLabel");
+  var backBtn = document.getElementById("backBtn");
+
+  function renderQuestion(){
+    var qs = activeQuestions();
+    var q = qs[state.qIndex];
+    qKicker.textContent = "Domanda " + (state.qIndex + 1) + " di " + qs.length;
+    qText.textContent = q.text;
+
+    faccineGrid.innerHTML = "";
+    FACCINE.forEach(function(f){
+      var btn = document.createElement("button");
+      btn.className = "faccia-btn";
+      if (state.answers[q.id] === f.value) btn.classList.add("selected");
+      btn.innerHTML = '<span class="emoji">' + f.emoji + '</span><span class="label">' + f.label + '</span>';
+      btn.addEventListener("click", function(){
+        state.answers[q.id] = f.value;
+        renderQuestion();
+        setTimeout(function(){ advanceQuestion(qs); }, 380);
+      });
+      faccineGrid.appendChild(btn);
+    });
+
+    progressWrap.style.display = "block";
+    var pct = Math.round((state.qIndex / qs.length) * 100);
+    progressFill.style.width = pct + "%";
+    progressLabel.textContent = "Domanda " + (state.qIndex + 1) + " di " + qs.length;
+    backBtn.classList.remove("hidden");
+  }
+
+  function advanceQuestion(qs){
+    if (state.qIndex < qs.length - 1){
+      state.qIndex += 1;
+      renderQuestion();
+    } else {
+      progressFill.style.width = "100%";
+      inviaRisposte();
+    }
+  }
+
+  backBtn.addEventListener("click", function(){
+    if (state.screen === "question"){
+      if (state.qIndex > 0){
+        state.qIndex -= 1;
+        renderQuestion();
+      } else {
+        goToScreen("welcome");
+      }
+    }
+  });
+
+  // ---------- INVIO ----------
+  function inviaRisposte(){
+    goToScreen("sending");
+    chiamaApi({
+      action: "submitResponse",
+      codice: state.codice,
+      reparto: state.reparto,
+      chiRisponde: state.chiRisponde,
+      answers: state.answers
+    }).then(function(res){
+      if (res.success){
+        goToScreen("thanks");
+      } else {
+        document.getElementById("errorText").textContent = res.message || "Il codice non è più valido.";
+        goToScreen("error");
+      }
+    }).catch(function(){
+      document.getElementById("errorText").textContent = "Controlli la connessione internet e riprovi.";
+      goToScreen("error");
+    });
+  }
+
+  document.getElementById("retryBtn").addEventListener("click", inviaRisposte);
+
+  // ---------- NAVIGAZIONE SCHERMATE ----------
+  function goToScreen(name){
+    ["code","welcome","question","sending","thanks","error"].forEach(function(s){
+      document.getElementById("screen-" + s).classList.remove("active");
+    });
+    document.getElementById("screen-" + name).classList.add("active");
+    state.screen = name;
+    progressWrap.style.display = (name === "question") ? "block" : "none";
+    backBtn.classList.toggle("hidden", name !== "question");
+  }
+})();
+</script>
+
+</body>
+</html>

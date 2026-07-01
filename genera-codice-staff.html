@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Genera Codice — Staff</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #F5F1E6;
+    --surface: #FFFFFF;
+    --primary: #1F5C5B;
+    --primary-dark: #123F3E;
+    --accent: #D9A441;
+    --text: #26312F;
+    --text-muted: #667069;
+    --border: #E3DDCC;
+    --danger: #B4553F;
+    --danger-bg: #FBEAE5;
+    --font-display: 'Baloo 2', 'Segoe UI Rounded', sans-serif;
+    --font-body: 'Nunito', 'Segoe UI', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text);
+    min-height:100vh;
+    margin:0;
+    display:flex; align-items:center; justify-content:center;
+    padding:24px;
+  }
+  .card{
+    background: var(--surface);
+    border-radius: 26px;
+    padding: 36px 28px;
+    max-width: 420px;
+    width:100%;
+    box-shadow: 0 10px 30px rgba(31,92,91,0.08);
+    text-align:center;
+  }
+  .title{
+    font-family: var(--font-display);
+    font-weight:800;
+    font-size:24px;
+    color: var(--primary-dark);
+    margin-bottom:6px;
+  }
+  .subtitle{
+    color: var(--text-muted);
+    font-weight:600;
+    font-size:14px;
+    margin-bottom:26px;
+    line-height:1.4;
+  }
+  .code-display{
+    background: var(--bg);
+    border: 2.5px dashed var(--border);
+    border-radius: 18px;
+    padding: 28px 12px;
+    margin-bottom: 22px;
+    min-height:90px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .code-display .code-text{
+    font-family: var(--font-display);
+    font-weight:800;
+    font-size: 40px;
+    letter-spacing: 6px;
+    color: var(--primary-dark);
+  }
+  .code-display .placeholder{
+    color: var(--text-muted);
+    font-weight:600;
+    font-size:14px;
+  }
+  .generate-btn{
+    width:100%;
+    border:none;
+    background: var(--primary);
+    color:#fff;
+    font-family: var(--font-display);
+    font-weight:700;
+    font-size:17px;
+    padding: 18px;
+    border-radius: 16px;
+    cursor:pointer;
+    box-shadow: 0 8px 20px rgba(31,92,91,0.28);
+    transition: all .15s ease;
+  }
+  .generate-btn:disabled{ background:#C9C2AE; box-shadow:none; cursor:not-allowed; }
+  .generate-btn:not(:disabled):active{ transform: scale(0.98); }
+  .copy-btn{
+    width:100%;
+    border: 2px solid var(--primary);
+    background: transparent;
+    color: var(--primary);
+    font-family: var(--font-display);
+    font-weight:700;
+    font-size:15px;
+    padding: 14px;
+    border-radius: 16px;
+    cursor:pointer;
+    margin-top:12px;
+    display:none;
+  }
+  .copy-btn.show{ display:block; }
+  .error-box{
+    display:none;
+    background: var(--danger-bg);
+    color: var(--danger);
+    font-weight:700;
+    font-size:13.5px;
+    padding:12px 14px;
+    border-radius: 12px;
+    margin-top:16px;
+    line-height:1.4;
+  }
+  .error-box.show{ display:block; }
+  .hint{
+    margin-top:22px;
+    font-size:12.5px;
+    color: var(--text-muted);
+    line-height:1.5;
+  }
+  .spinner{
+    display:inline-block; width:16px; height:16px;
+    border:2.5px solid rgba(255,255,255,0.4); border-top-color:#fff;
+    border-radius:50%; animation: spin .7s linear infinite; margin-right:8px; vertical-align:-3px;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="title">🎟️ Genera nuovo codice</div>
+  <div class="subtitle">Uso interno staff — un codice per ogni consegna a fine degenza</div>
+
+  <div class="code-display" id="codeDisplay">
+    <span class="placeholder">Premi il pulsante qui sotto</span>
+  </div>
+
+  <button class="generate-btn" id="generateBtn">Genera nuovo codice</button>
+  <button class="copy-btn" id="copyBtn">📋 Copia codice</button>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <div class="hint">
+    Consegni questo codice (scritto a mano o mostrato sullo schermo) al paziente o al
+    familiare, insieme all'indirizzo dell'app da compilare. Il codice è valido una sola volta.
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var API_URL = "https://script.google.com/macros/s/AKfycbxfTOfhigOMMWpuvRXMIjVG9xC7acwmZkIvln2aGyOX7iBLAeucZww_BuSJcj7HxziuLw/exec";
+
+  var codeDisplay = document.getElementById("codeDisplay");
+  var generateBtn = document.getElementById("generateBtn");
+  var copyBtn = document.getElementById("copyBtn");
+  var errorBox = document.getElementById("errorBox");
+  var codiceGenerato = "";
+
+  generateBtn.addEventListener("click", function(){
+    generateBtn.disabled = true;
+    generateBtn.innerHTML = '<span class="spinner"></span>Genero...';
+    errorBox.classList.remove("show");
+
+    fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ action: "generateCode" })
+    })
+    .then(function(r){ return r.json(); })
+    .then(function(res){
+      generateBtn.disabled = false;
+      generateBtn.textContent = "Genera nuovo codice";
+      if (res.success){
+        codiceGenerato = res.codice;
+        codeDisplay.innerHTML = '<span class="code-text">' + res.codice + '</span>';
+        copyBtn.classList.add("show");
+      } else {
+        errorBox.textContent = res.message || "Errore nella generazione del codice.";
+        errorBox.classList.add("show");
+      }
+    })
+    .catch(function(){
+      generateBtn.disabled = false;
+      generateBtn.textContent = "Genera nuovo codice";
+      errorBox.textContent = "Impossibile contattare il sistema. Controlli la connessione internet.";
+      errorBox.classList.add("show");
+    });
+  });
+
+  copyBtn.addEventListener("click", function(){
+    if (!codiceGenerato) return;
+    navigator.clipboard.writeText(codiceGenerato).then(function(){
+      copyBtn.textContent = "✓ Copiato!";
+      setTimeout(function(){ copyBtn.textContent = "📋 Copia codice"; }, 1500);
+    });
+  });
+})();
+</script>
+
+</body>
+</html>
